@@ -34,6 +34,8 @@ using UniqueGLFWwindowPtr = std::unique_ptr<GLFWwindow, void (*)(GLFWwindow*)>;
 
 static_assert(FLUTTER_ENGINE_VERSION == 1, "");
 
+const int kFlutterDesktopDontCare = GLFW_DONT_CARE;
+
 static constexpr double kDpPerInch = 160.0;
 
 // Struct for storing state within an instance of the GLFW Window.
@@ -736,12 +738,21 @@ void FlutterDesktopWindowSetPixelRatioOverride(
   }
 }
 
+void FlutterDesktopWindowSetSizeLimits(FlutterDesktopWindowRef flutter_window,
+                                       FlutterDesktopSize minimum_size,
+                                       FlutterDesktopSize maximum_size) {
+  glfwSetWindowSizeLimits(flutter_window->window, minimum_size.width,
+                          minimum_size.height, maximum_size.width,
+                          maximum_size.height);
+}
+
 bool FlutterDesktopRunWindowEventLoopWithTimeout(
     FlutterDesktopWindowControllerRef controller,
     uint32_t timeout_milliseconds) {
-  auto wait_duration = timeout_milliseconds == 0
-                           ? std::chrono::milliseconds::max()
-                           : std::chrono::milliseconds(timeout_milliseconds);
+  std::chrono::nanoseconds wait_duration =
+      timeout_milliseconds == 0
+          ? std::chrono::nanoseconds::max()
+          : std::chrono::milliseconds(timeout_milliseconds);
   controller->event_loop->WaitForEvents(wait_duration);
 
   return !glfwWindowShouldClose(controller->window.get());
